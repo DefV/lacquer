@@ -21,7 +21,7 @@ module Lacquer
     end
     
     # Sends commands over telnet to varnish servers listed in the config.
-    def send_command(command)
+    def send_commands(*commands)
       Lacquer.configuration.varnish_servers.collect do |server|
         retries = 0
         response = nil
@@ -56,7 +56,10 @@ module Lacquer
             end
           end
           
-          connection.cmd('String' => command, 'Match' => /\n\n/) {|r| response = r.split("\n").first.strip}
+          commands.each do |command|
+            connection.cmd('String' => command, 'Match' => /\n\n/) {|r| response = r.split("\n").first.strip}
+          end
+          
           connection.close if connection.respond_to?(:close)
         rescue Exception => e
           if retries < Lacquer.configuration.retries
@@ -76,5 +79,6 @@ module Lacquer
         response
       end
     end
+    alias :send_command :send_commands
   end
 end
